@@ -1,0 +1,9 @@
+color:
+  red: 0x002000
+  green: 0x200000
+  blue:  0x000020
+led:
+  count: 85
+  brightness: 255
+pi:
+  pin: 12

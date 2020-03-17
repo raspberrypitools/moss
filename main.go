@@ -1,11 +1,12 @@
 package main
 
 import (
-        "fmt"
+	"os"
 	"time"
 	"moss/config"
 
         "github.com/jgarff/rpi_ws281x/golang/ws2811"
+	"github.com/wangbokun/go/log"
 )
 
 const (
@@ -43,7 +44,7 @@ func led(t time.Duration, n []int, color uint32) {
 	for _,v := range n {
 		err  := colorWipe(v,color)
 		if err != nil{
-			fmt.Println(err)
+			log.Error("%s",err)
 		}
 	        time.Sleep(t)
 	}
@@ -51,11 +52,14 @@ func led(t time.Duration, n []int, color uint32) {
 
 func main(){
 
+
      err := ws2811.Init(pin, count, brightness)
 
      if err != nil{
-	fmt.Println(err)
-     }	else {
+	     log.Error("%s",err)
+	     os.Exit(1)
+	}
+
 	for  _,v1 := range t {
 		n1 := config.ClockFaces(1,v1)
 		if n1 !=  nil{
@@ -65,8 +69,8 @@ func main(){
 
 		for _,v2 := range t{
 			n2 := config.ClockFaces(2,v2)
-			fmt.Println("n1======:",n1)
-			fmt.Println("n2>>>>>>>:",n2)
+			log.Info("n1======:",n1)
+			log.Info("n2>>>>>>>:",n2)
 			if n2 != nil{
 				led(5 * time.Millisecond,n1,b2)
 				led(30 * time.Millisecond,n2,b3)
@@ -74,5 +78,4 @@ func main(){
 			}
 		}
 	}
-    }
 }

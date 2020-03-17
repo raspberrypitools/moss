@@ -1,61 +1,42 @@
 package main
 
 import (
-	"time"
 	"os"
-	"fmt"
-
-	"github.com/jgarff/rpi_ws281x/golang/ws2811"
+	"moss/config"
+	"github.com/wangbokun/go/log"
+	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
 )
 
-const (
-	pin = 12
-	count = 85
-	brightness = 255
-)
+func checkError(err error){
+        if err != nil {
+		log.Debug("%#v",err)
+                panic(err)
+        }
+}
 
 func main() {
-	defer ws2811.Fini()
-	err := ws2811.Init(pin, count, brightness)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("Press Ctr-C to quit.")
-		fmt.Println("Creating blue color wipe")
-		err = colorWipe(uint32(0x000020))
-		if err != nil {
-			fmt.Println("Error during wipe " + err.Error())
-			os.Exit(-1)
-		}
-
-		fmt.Println("Creating red color wipe")
-		err = colorWipe(uint32(0x002000))
-		if err != nil {
-			fmt.Println("Error during wipe " + err.Error())
-			os.Exit(-1)
-		}
-
-		fmt.Println("Creating green color wipe")
-		err = colorWipe(uint32(0x200000))
-		if err != nil {
-			fmt.Println("Error during wipe " + err.Error())
-			os.Exit(-1)
-		}
+	err  := config.Init("./etc/moss.yaml")
+	if err != nil{
+		log.Error("init config error %s ,exit",err)
+		os.Exit(1)
 	}
-}
+	log.Debug("%#v",config.Conf)
 
-func colorWipe(color uint32) error {
-	for i := 0; i < count; i++ {
-		ws2811.SetLed(i, color)
-		err := ws2811.Render()
-		if err != nil {
-			ws2811.Clear()
-			return err
-		}
+	opt := ws2811.DefaultOptions
+	opt.Channels[0].Brightness = config.Conf.Led.Brightness
+	opt.Channels[0].LedCount = config.Conf.Led.Count
 
-		time.Sleep(50 * time.Millisecond)
+	dev, err := ws2811.MakeWS2811(&opt)
+	checkError(err)
+
+	cw := &config.ColorWipe{
+		Ws: dev,
 	}
+	checkError(cw.Setup())
+	defer dev.Fini()
 
-	return nil
+	cw.Display(uint32(0x0000ff))
+	cw.Display(uint32(0x00ff00))
+	cw.Display(uint32(0xff0000))
+	cw.Display(uint32(0x000000))
 }
-
